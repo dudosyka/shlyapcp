@@ -4,11 +4,23 @@ const parser = require('body-parser');
 const cors = require('cors');
 const cp = require("child_process")
 
+const { exec } = require('child_process')
+
 const app = express()
 const port = 3000
 
 
-const conf = require("main.conf.js")
+const conf = {
+    domain: "dudosyka.ru",
+    nginx: {
+        main: "/etc/nginx/",
+        enabled: "/etc/nginx/sites-enabled",
+        available: "/etc/nginx/sites-available"
+    },
+    sites_path: "/root/domains/"
+}
+
+	//require("main.conf.js")
 
 app.use(cors())
 app.use(parser.urlencoded({extended: false, limit: '50mb', parameterLimit: 1000000}))
@@ -24,19 +36,51 @@ app.get('/create', (req, res) => {
 
 app.post('/create', (req, res) => {
     if (req.body.type == 1) {
-        fs.appendFile(`${req.body.name}.${conf.domain}`, fs.readFileSync('domain1.conf').toString().replace('%name%', req.body.name).replace('%name%', req.body.name), err => {
+        fs.appendFile(`../domains/confs/${req.body.name}.${conf.domain}`, fs.readFileSync('domain1.conf').toString().replace('%name%', req.body.name).replace('%name%', req.body.name), err => {
             console.log(err);
-        })
+            fs.copyFile(`../domains/confs/${req.body.name}.${conf.domain}`, `/etc/nginx/sites-available/${req.body.name}.${conf.domain}`, (err) => {
+	    const lnchild = cp.execFile(`./upload_bash/ln.sh`, [ `-a${req.body.name}.${conf.domain}` ]); 
+            lnchild.on('exit', () => {console.log(11);});
+            const ntchild = cp.execFile(`./upload_bash/nginxt.sh`, [ `-a${req.body.name}.${conf.domain}` ]);
+            ntchild.on('exit', () => {console.log(11);});
+            const nxchild = cp.execFile(`./upload_bash/nginxrs.sh`, [ `-a${req.body.name}.${conf.domain}` ]);
+            nxchild.on('exit', () => {console.log(11);});
+            
+            const cchild = cp.execFile(`./upload_bash/certbot.sh`, [ `-a${req.body.name}.${conf.domain}` ]);
+            cchild.on('exit', () => {console.log(11);});
+
+            const mkchild = cp.execFile(`./upload_bash/mkdir.sh`, [ `-a${req.body.name}.${conf.domain}` ]);
+            mkchild.on('exit', () => {console.log(11);});
+            const indexchild = cp.execFile(`./upload_bash/index.sh`, [ `-a${req.body.name}.${conf.domain}` ]);
+            indexchild.on('exit', () => {console.log(11);});
+		    console.log('err',err);
+	    });
+	})
     } else {
-        fs.appendFile(`${req.body.name}.${conf.domain}`, fs.readFileSync('domain2.conf').toString().replace('%name%', req.body.name).replace('%name%', req.body.name).replace('%name%', req.body.name).replace('%port%', req.body.port), err => {
-            console.log(err);
+        fs.appendFile(`../domains/confs/${req.body.name}.${conf.domain}`, fs.readFileSync('domain2.conf').toString().replace('%name%', req.body.name).replace('%name%', req.body.name).replace('%name%', req.body.name).replace('%port%', req.body.port), err => {
+		console.log(err);
+            fs.copyFile(`../domains/confs/${req.body.name}.${conf.domain}`, `/etc/nginx/sites-available/${req.body.name}.${conf.domain}`, (err) => {
+                    console.log('err',err);
+            const lnchild = cp.execFile(`./upload_bash/ln.sh`, [ `-a${req.body.name}.${conf.domain}` ]);
+            lnchild.on('exit', () => {console.log(11);});
+            const ntchild = cp.execFile(`./upload_bash/nginxt.sh`, [ `-a${req.body.name}.${conf.domain}` ]);
+            ntchild.on('exit', () => {console.log(11);});
+            const nxchild = cp.execFile(`./upload_bash/nginxrs.sh`, [ `-a${req.body.name}.${conf.domain}` ]);
+            nxchild.on('exit', () => {console.log(11);});
+            
+            const cchild = cp.execFile(`./upload_bash/certbot.sh`, [ `-a${req.body.name}.${conf.domain}` ]);
+            cchild.on('exit', () => {console.log(11);});
+
+	    const mkchild = cp.execFile(`./upload_bash/mkdir.sh`, [ `-a${req.body.name}.${conf.domain}` ]);
+            mkchild.on('exit', () => {console.log(11);});
+            const indexchild = cp.execFile(`./upload_bash/index.sh`, [ `-a${req.body.name}.${conf.domain}` ]);
+            indexchild.on('exit', () => {console.log(11);});
+            });
+
+		console.log(err);
         })
     }
-    cp.spawn(`cp ./${req.body.name}.${conf.domain} ${conf.nginx.available}`);
-    cp.spawn(`ln -s ${conf.nginx.available}/${req.body.name}.${conf.domain} ${conf.nginx.enabled}/${req.body.name}.${conf.domain}`);
-    cp.spawn(`nginx -t`);
-    cp.spawn(`systemctl restart nginx`);
-    cp.spawn(`certbot --nginx -d ${req.body.name}.${conf.domain}`)
+    res.send("");
 })
 
 app.get('/manage', (req, res) => {
