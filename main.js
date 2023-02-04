@@ -11,7 +11,7 @@ const port = 3000
 
 
 const conf = {
-    domain: "dudosyka.ru",
+    domain: "psyreply.com",
     nginx: {
         main: "/etc/nginx/",
         enabled: "/etc/nginx/sites-enabled",
